@@ -37,23 +37,12 @@ def get_train_data(num_class, file_pattern="data/*.npy", train_samples_per_class
 
 def param_generator(num_class):
     params = {'num_class': num_class}
-    convs = [(64, 64, 64, 64, 64, 64),
-             (32, 32, 32, 64, 64, 64),
-             (64, 64, 64, 32, 32, 32),
-             (32, 32, 32, 32, 32, 32),
-             (32, 32, 32, 16, 16, 16),
-             (16, 16, 16, 32, 32, 32),
-             (16, 16, 16, 16, 16, 16)]
-    dropouts = [(0.1, 0.1, 0.1, 0.08, 0.08, 0.08, 0.4, 0.4),
-                (0.08, 0.08, 0.08, 0.05, 0.05, 0.05, 0.2, 0.2),
-                (0.05, 0.05, 0.05, 0.03, 0.03, 0.03, 0.1, 0.1),
-                (0.03, 0.03, 0.03, 0.01, 0.01, 0.01, 0.05, 0.05)]
-    batch_norms = [(False, False, False, False, False, False, True),
-                   (False, False, False, True, True, True, True),
-                   (True, True, True, True, True, True, True)]
-    denses = [256, 512, 1024]
-    learning_rates = [0.03, 0.05, 0.1]
-    decays = [0.2, 0.4]
+    convs = [(64, 64, 64, 64, 64, 64)]
+    dropouts = [(0.03, 0.03, 0.03, 0.01, 0.01, 0.01, 0.05, 0.05)]
+    batch_norms = [(True, True, True, True, True, True, True)]
+    denses = [512]
+    learning_rates = [0.1]
+    decays = [0.4]
     for learning_rate in learning_rates:
         params["learning_rate"] = learning_rate
         for decay in decays:
@@ -90,7 +79,7 @@ def get_model(params):
 
     # convblock 02
     x = Conv2D(params["conv"][3], (3, 3), padding='same', activation='relu',
-            input_shape=input_layer.shape, name='Conv04_layer')(x)
+            name='Conv04_layer')(x)
     x = Dropout(params["dropout"][3], name='Dropout04')(x)
     if params["batch_norm"][3]:
         x = BatchNormalization(name='BatchNormalization04_layer')(x)
@@ -136,7 +125,7 @@ if __name__ == '__main__':
     NUM_CLASS = 100
     BATCH_SIZE = 2**8
     NUM_TRAIN_SAMPLES_PER_CLASS = 2**10
-    NUM_EPOCH = 5
+    NUM_EPOCH = 200
     LOGDIR = "./logs"
     
     # construct train data generator
