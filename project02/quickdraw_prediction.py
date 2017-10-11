@@ -14,7 +14,7 @@ from keras.callbacks import EarlyStopping, LearningRateScheduler, ReduceLROnPlat
 import keras.backend as K
 
 
-def get_train_data(num_class, file_pattern="data/*.npy", train_samples_per_class=2**10):
+def get_data(num_class, file_pattern="data/*.npy", train_samples_per_class=2**10, test_samples_per_class=2**8):
     # read raw data
     data_map = {}
     for i,f in enumerate(glob.glob(file_pattern)):
@@ -24,15 +24,21 @@ def get_train_data(num_class, file_pattern="data/*.npy", train_samples_per_class
     train_data_map, test_data_map = {}, {}
     for key in data_map:
         train_data_map[key] = data_map[key].reshape((-1, 28, 28))[:,:,:,np.newaxis][:train_samples_per_class]
+        test_data_map[key] = data_map[key].reshape((-1, 28, 28))[:,:,:,np.newaxis][train_samples_per_class:train_samples_per_class+test_samples_per_class]
         train_data_map[key] = train_data_map[key].astype("float32") / 255
+        test_data_map[key] = test_data_map[key].astype("float32") / 255
 
     # construct train dataset
     class_orders = data_map.keys()
     train_data = np.concatenate([train_data_map[key] for key in class_orders])
+    test_data = np.concatenate([test_data_map[key] for key in class_orders])
     train_target = np.concatenate([train_data_map[k].shape[0]*[i]
-                                for i,k in enumerate(class_orders)])
+                                   for i,k in enumerate(class_orders)])
+    test_target = np.concatenate([test_data_map[k].shape[0]*[i]
+                                  for i,k in enumerate(class_orders)])
     train_target = np_utils.to_categorical(train_target)
-    return train_data, train_target
+    test_target = np_utils.to_categorical(test_target)
+    return train_data, train_target, test_data, test_target
 
 
 def param_generator(num_class):
@@ -41,7 +47,7 @@ def param_generator(num_class):
     dropouts = [(0.03, 0.03, 0.03, 0.01, 0.01, 0.01, 0.05, 0.05)]
     batch_norms = [(True, True, True, True, True, True, True)]
     denses = [512]
-    learning_rates = [0.1]
+    learning_rates = [0.03]
     decays = [0.4]
     for learning_rate in learning_rates:
         params["learning_rate"] = learning_rate
@@ -129,7 +135,7 @@ if __name__ == '__main__':
     LOGDIR = "./logs"
     
     # construct train data generator
-    train_data, train_target = get_train_data(NUM_CLASS, train_samples_per_class=NUM_TRAIN_SAMPLES_PER_CLASS)
+    train_data, train_target, test_data, test_target = get_data(NUM_CLASS, train_samples_per_class=NUM_TRAIN_SAMPLES_PER_CLASS)
     train_data_gen = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
                                         height_shift_range=0.1, horizontal_flip=True,
                                         vertical_flip=False)
@@ -147,6 +153,7 @@ if __name__ == '__main__':
         K.set_value(model.optimizer.lr, params["learning_rate"])
         model.fit_generator(train_data_gen.flow(train_data, train_target, batch_size=BATCH_SIZE),
                             steps_per_epoch=train_data.shape[0] // BATCH_SIZE,
+                            validation_data=(test_data, test_target),
                             epochs=NUM_EPOCH,
                             workers=8,
                             callbacks=callbacks)
