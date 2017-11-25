@@ -7,6 +7,9 @@ from keras import backend as K
 
 
 class BSONIterator(Iterator):
+    """
+    Reference: https://www.kaggle.com/humananalog/keras-generator-for-reading-directly-from-bson
+    """
 
     def __init__(self, bson_file, image_df, offset_df, num_class, image_data_generator,
                  lock, target_size=(180, 180), with_label=True, batch_size=32,
