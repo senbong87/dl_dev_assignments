@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
-from keras.applications.xception import preprocess_input
 from keras import backend as K
 from tqdm import tqdm
 
@@ -24,7 +23,7 @@ NUM_TEST_PRODUCTS = 1768182
 category_df = pd.read_csv("data/raw/category_names.csv", index_col="category_id")
 category_df["category_idx"] = pd.Series(range(category_df.shape[0]), index=category_df.index)
 submission_df = pd.read_csv("data/raw/sample_submission.csv")
-test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+test_datagen = ImageDataGenerator()
 data = bson.decode_file_iter(open("data/raw/test.bson", "rb"))
 
 # create category to index mapping and index to category mapping
